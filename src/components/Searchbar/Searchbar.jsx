@@ -1,6 +1,6 @@
 import React from "react";
 
-function Searchbar({ onChange, onClick, state }) {
+function Searchbar({ onChange, onClick, value }) {
   return (
     <header className="Searchbar">
       <form className="SearchForm">
@@ -16,7 +16,7 @@ function Searchbar({ onChange, onClick, state }) {
           autofocus
           placeholder="Search images and photos"
           onChange={onChange}
-          value={state.value}
+          value={value}
         />
       </form>
     </header>

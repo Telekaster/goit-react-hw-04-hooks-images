@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { useState, useEffect } from "react";
 import sendRequest from "./services/api";
 import Loader from "react-loader-spinner";
 import Searchbar from "./components/Searchbar/Searchbar";
@@ -6,74 +6,62 @@ import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Button from "./components/Button/Button";
 import Modal from "./components/Modal/Modal";
 
-class App extends Component {
-  state = {
-    value: "",
-    page: 1,
-    images: [],
-    loaded: "",
-    modal: false,
-    largeImage: "",
+
+export default function App() {
+  const [value, setValue] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [loaded, setLoaded] = useState('');
+  const [modal, setModal] = useState(false);
+  const [largeImage, setLargeImage] = useState('');
+
+
+  function handleChange(e) {
+    setValue(e.target.value );
   };
 
-  handleChange = (e) => {
-    this.setState({ value: e.target.value });
+  function searchImages(e) {
+    setImages([]);
+    setPage(2);
+    setLoaded(false);
+    sendRequest(value, page, images).then((data) => { setImages(data.images); setLoaded(data.loaded)});
+
   };
 
-  searchImages = (e) => {
-    this.setState({ images: [], page: 2, loaded: false });
-
-    sendRequest(this.state.value, this.state.page, this, this.state.images);
+  function openLargeImage(e) {
+    setModal(true);
+    const largeImage = images.find((item) => item.id === Number(e.target.parentNode.id));
+    return setLargeImage(largeImage);
   };
 
-  loadMoreImages = () => {
-    const page = this.state.page;
-    this.setState({ page: page + 1 });
-
-    sendRequest(this.state.value, this.state.page, this, this.state.images);
+  function loadMoreImages() {
+    setPage(page + 1);
+    sendRequest(value, page, images).then((data) => { setImages([...images, ...data.images]); setLoaded(data.loaded)});
   };
 
-  openLargeImage = (e) => {
-    this.setState({ modal: true });
-
-    const largeImage = this.state.images.find(
-      (item) => item.id === Number(e.target.parentNode.id)
-    );
-
-    return this.setState({ largeImage: largeImage });
-  };
-
-  closeModal = (e) => {
+  
+  function  closeModal(e) {
     if (e.target.className === "Overlay") {
-      this.setState({ modal: false, largeImage: "" });
-    }
+    setModal(false);
+    setLargeImage('');
+    };
   };
 
-  componentDidUpdate() {
+  useEffect(() => {
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: "smooth",
     });
-  }
-
-  render() {
-    const {
-      handleChange,
-      searchImages,
-      loadMoreImages,
-      openLargeImage,
-      closeModal,
-      state,
-    } = this;
-
+  });
+  
     return (
       <>
         <Searchbar
           onChange={handleChange}
           onClick={searchImages}
-          state={state}
+          value={value}
         />
-        {state.loaded === false ? (
+        {loaded === false ? (
           <Loader
             type="Puff"
             color="#00BFFF"
@@ -83,13 +71,10 @@ class App extends Component {
             className="loader"
           />
         ) : (
-          <ImageGallery state={state} onClick={openLargeImage} />
+          <ImageGallery images={images} onClick={openLargeImage} />
         )}
-        ;{state.images.length && <Button onClick={loadMoreImages} />};
-        {state.modal && <Modal image={state.largeImage} onClick={closeModal} />}
+        ;{images.length && <Button onClick={loadMoreImages} />};
+        {modal && <Modal image={largeImage} onClick={closeModal} />}
       </>
     );
-  }
-}
-
-export default App;
+};
